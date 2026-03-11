@@ -299,7 +299,6 @@
             </div>
           </div>
 
-          <!-- زر إنهاء الليل (مخفي حتى يصوّت الجميع) -->
           <button id="btn-finish-night"
                   style="margin-top:0.5rem; width:100%; background:#38405f; color:#e5e9ff; display:none;"
                   onclick="finishNight()">إنهاء الليل وتطبيق النتيجة</button>
@@ -353,7 +352,9 @@
   </div>
 
   <script>
-    let players = []; // {name, role, alive, roleRevealed, nightVoted, dayVoted}
+    const STORAGE_KEY = 'mafia_one_phone_state';
+
+    let players = [];
     let mafiaCount = 1;
     let roundNumber = 1;
 
@@ -404,6 +405,121 @@
     let currentNightVoterName = null;
     let currentDayVoterName = null;
 
+    // ==== تخزين/استرجاع الحالة عبر localStorage ====[web:108][web:110][web:113]
+    function saveGameState() {
+      const currentScreen =
+        !screenSetup.classList.contains('hidden') ? 'setup' :
+        !screenRoles.classList.contains('hidden') ? 'roles' :
+        !screenMain.classList.contains('hidden') ? 'main' :
+        !screenEnd.classList.contains('hidden') ? 'end' : 'setup';
+
+      const state = {
+        players,
+        mafiaCount,
+        roundNumber,
+        mafiaVotes,
+        doctorTarget,
+        lastDoctorTarget,
+        dayVotes,
+        currentNightVoterName,
+        currentDayVoterName,
+        currentScreen,
+        nightResultText: nightResultDiv.textContent,
+        nightResultVisible: !nightResultDiv.classList.contains('hidden'),
+        logText: logDiv.textContent,
+        phaseKillVisible: !document.getElementById('phase-kill').classList.contains('hidden'),
+        phaseVoteVisible: !document.getElementById('phase-vote').classList.contains('hidden'),
+        finishNightVisible: (btnFinishNight.style.display !== 'none')
+      };
+
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (e) {
+        console.warn('localStorage save error', e);
+      }
+    }
+
+    function loadGameState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          updateMafiaCountOptions();
+          return;
+        }
+        const state = JSON.parse(raw);
+        if (!state || !Array.isArray(state.players)) {
+          updateMafiaCountOptions();
+          return;
+        }
+
+        players = state.players;
+        mafiaCount = state.mafiaCount || 1;
+        roundNumber = state.roundNumber || 1;
+        mafiaVotes = state.mafiaVotes || {};
+        doctorTarget = state.doctorTarget || null;
+        lastDoctorTarget = state.lastDoctorTarget || null;
+        dayVotes = state.dayVotes || {};
+        currentNightVoterName = state.currentNightVoterName || null;
+        currentDayVoterName = state.currentDayVoterName || null;
+
+        // استرجاع الشاشة الحالية
+        showScreen(state.currentScreen || 'setup');
+
+        // إعادة رسم حسب الشاشة
+        if (state.currentScreen === 'setup') {
+          renderPlayersList();
+          updateMafiaCountOptions();
+          updateRolesSummaryPreview();
+        } else if (state.currentScreen === 'roles') {
+          renderRolesScreen();
+        } else if (state.currentScreen === 'main') {
+          renderMainScreen();
+          // تطبيق تفاصيل إضافية
+          nightResultDiv.textContent = state.nightResultText || '';
+          if (state.nightResultVisible) nightResultDiv.classList.remove('hidden');
+          else nightResultDiv.classList.add('hidden');
+          logDiv.textContent = state.logText || '';
+
+          if (state.phaseKillVisible) {
+            document.getElementById('phase-kill').classList.remove('hidden');
+          } else {
+            document.getElementById('phase-kill').classList.add('hidden');
+          }
+          if (state.phaseVoteVisible) {
+            document.getElementById('phase-vote').classList.remove('hidden');
+          } else {
+            document.getElementById('phase-vote').classList.add('hidden');
+          }
+          btnFinishNight.style.display = state.finishNightVisible ? 'block' : 'none';
+
+          // إعادة بناء قوائم المصوتين
+          buildNightVoterList();
+          buildDayVoterList();
+          // تحديث قائمة اقتراحات المافيا
+          updateMafiaVotesView();
+        } else if (state.currentScreen === 'end') {
+          endMessage.textContent = state.endMessage || '';
+          renderFinalStatusOnly();
+        }
+
+        roundNumberSpan.textContent = roundNumber;
+        renderAliveList();
+        statusLineDiv.textContent = buildStatusText();
+      } catch (e) {
+        console.warn('localStorage load error', e);
+        updateMafiaCountOptions();
+      }
+    }
+
+    function clearGameState() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {
+        console.warn('localStorage clear error', e);
+      }
+    }
+
+    // ==== منطق اللعبة ====
     function addPlayer() {
       const name = playerNameInput.value.trim();
       if (!name) return;
@@ -412,6 +528,7 @@
       renderPlayersList();
       updateMafiaCountOptions();
       updateRolesSummaryPreview();
+      saveGameState();
     }
 
     function renderPlayersList() {
@@ -427,6 +544,7 @@
             renderPlayersList();
             updateMafiaCountOptions();
             updateRolesSummaryPreview();
+            saveGameState();
           }
         };
         playersListDiv.appendChild(span);
@@ -448,6 +566,7 @@
       rolesSummary.textContent = '';
       updateMafiaCountOptions();
       showScreen('setup');
+      clearGameState();
     }
 
     function newGameSameNames() {
@@ -471,6 +590,7 @@
       updateMafiaCountOptions();
       updateRolesSummaryPreview();
       startGame();
+      saveGameState();
     }
 
     function updateMafiaCountOptions() {
@@ -487,6 +607,7 @@
       mafiaCountSelect.onchange = () => {
         mafiaCount = parseInt(mafiaCountSelect.value, 10);
         updateRolesSummaryPreview();
+        saveGameState();
       };
     }
 
@@ -548,6 +669,7 @@
       nightResultDiv.textContent = '';
       showScreen('roles');
       renderRolesScreen();
+      saveGameState();
     }
 
     function shuffle(arr) {
@@ -575,7 +697,7 @@
         btn.textContent = p.name + (p.roleRevealed ? ' ✓' : '');
         btn.className = 'btn-small';
         btn.disabled = p.roleRevealed;
-        btn.onclick = () => showRole(idx);
+        btn.onclick = () => { showRole(idx); };
         rolesPlayersDiv.appendChild(btn);
       });
       const remaining = players.filter(p => !p.roleRevealed).length;
@@ -615,6 +737,7 @@
 
       roleView.classList.remove('hidden');
       roleOpen = true;
+      saveGameState();
     }
 
     function hideCurrentRole() {
@@ -625,11 +748,13 @@
       roleOpen = false;
       currentRoleIndex = null;
       renderRolesScreen();
+      saveGameState();
     }
 
     function goToMainScreen() {
       showScreen('main');
       prepareNewRound();
+      saveGameState();
     }
 
     function prepareNewRound() {
@@ -644,9 +769,9 @@
       roundNumberSpan.textContent = roundNumber;
       renderAliveList();
       statusLineDiv.textContent = buildStatusText();
-      logDiv.textContent = '';
+      logDiv.textContent = logDiv.textContent || '';
       nightResultDiv.classList.add('hidden');
-      nightResultDiv.textContent = '';
+      nightResultDiv.textContent = nightResultDiv.textContent || '';
       buildNightVoterList();
       buildDayVoterList();
       nightTargetArea.classList.add('hidden');
@@ -692,7 +817,7 @@
         btn.className = 'btn-small';
         btn.textContent = p.name + (p.nightVoted ? ' ✓' : '');
         btn.disabled = p.nightVoted;
-        btn.onclick = () => selectNightVoter(p.name);
+        btn.onclick = () => { selectNightVoter(p.name); };
         nightVoterListDiv.appendChild(btn);
       });
     }
@@ -762,6 +887,7 @@
       }
 
       nightTargetArea.classList.remove('hidden');
+      saveGameState();
     }
 
     function confirmNightAction() {
@@ -827,8 +953,10 @@
 
       if (allVoted) {
         nightVoterListDiv.innerHTML = '<div class="status-line">تمت جميع اختيارات الليل.</div>';
-        btnFinishNight.style.display = 'block'; // إظهار زر إنهاء الليل بعد تصويت الجميع[web:89][web:100]
+        btnFinishNight.style.display = 'block';
       }
+
+      saveGameState();
     }
 
     function updateMafiaVotesView() {
@@ -888,7 +1016,7 @@
 
       nightResultDiv.classList.remove('hidden');
       if (killed && killedName) {
-        nightResultDiv.textContent = 'تم قتل ' + killedName + ' هذه الليلة.'; // إظهار الاسم[web:99][web:80]
+        nightResultDiv.textContent = 'تم قتل ' + killedName + ' هذه الليلة.';
       } else {
         nightResultDiv.textContent = 'محاولة قتل فاشلة.';
       }
@@ -900,11 +1028,15 @@
       mafiaVotes = {};
       btnFinishNight.style.display = 'none';
 
-      if (checkEndGame()) return;
+      if (checkEndGame()) {
+        saveGameState();
+        return;
+      }
 
       document.getElementById('phase-kill').classList.add('hidden');
       document.getElementById('phase-vote').classList.remove('hidden');
       buildDayVoterList();
+      saveGameState();
     }
 
     // DAY
@@ -916,7 +1048,7 @@
         btn.className = 'btn-small';
         btn.textContent = p.name + (p.dayVoted ? ' ✓' : '');
         btn.disabled = p.dayVoted;
-        btn.onclick = () => selectDayVoter(p.name);
+        btn.onclick = () => { selectDayVoter(p.name); };
         dayVoterListDiv.appendChild(btn);
       });
     }
@@ -945,6 +1077,7 @@
       });
 
       dayTargetArea.classList.remove('hidden');
+      saveGameState();
     }
 
     function confirmDayVote() {
@@ -974,6 +1107,8 @@
       if (allVoted) {
         dayVoterListDiv.innerHTML = '<div class="status-line">تمت جميع تصويتات النهار.</div>';
       }
+
+      saveGameState();
     }
 
     function finishDayVoting() {
@@ -997,13 +1132,17 @@
 
       renderAliveList();
 
-      if (checkEndGame()) return;
+      if (checkEndGame()) {
+        saveGameState();
+        return;
+      }
 
       roundNumber++;
       roundNumberSpan.textContent = roundNumber;
       document.getElementById('phase-kill').classList.remove('hidden');
       document.getElementById('phase-vote').classList.add('hidden');
       prepareNewRound();
+      saveGameState();
     }
 
     function checkEndGame() {
@@ -1032,6 +1171,17 @@
         div.textContent = p.name + ' – ' + p.role + (p.alive ? ' (حي)' : ' (مستبعد)');
         finalStatusDiv.appendChild(div);
       });
+      saveGameState();
+    }
+
+    function renderFinalStatusOnly() {
+      finalStatusDiv.innerHTML = '';
+      players.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'pill' + (p.alive ? '' : ' dead');
+        div.textContent = p.name + ' – ' + p.role + (p.alive ? ' (حي)' : ' (مستبعد)');
+        finalStatusDiv.appendChild(div);
+      });
     }
 
     function resetGame() {
@@ -1050,9 +1200,11 @@
       nightResultDiv.textContent = '';
       updateMafiaCountOptions();
       updateRolesSummaryPreview();
+      clearGameState();
     }
 
-    updateMafiaCountOptions();
+    // تحميل الحالة عند فتح الصفحة
+    window.addEventListener('load', loadGameState);
   </script>
 </body>
 </html>
