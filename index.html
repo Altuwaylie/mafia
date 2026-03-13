@@ -18,6 +18,8 @@
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; padding: 0; height: 100%; }
+
+    /* ثيم عام افتراضي */
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: radial-gradient(circle at top, #182645 0, #050816 45%);
@@ -26,13 +28,28 @@
       display: flex;
       justify-content: center;
       align-items: stretch;
+      overflow-x: hidden;
     }
+
+    /* ثيم الليل */
+    body.night-mode {
+      background: radial-gradient(circle at top, #111827 0, #020617 45%);
+    }
+
+    /* ثيم النهار */
+    body.day-mode {
+      background: linear-gradient(to bottom, #87ceeb 0%, #e0f7ff 40%, #f5ffe4 100%);
+      color: #042f2e;
+    }
+
     .root {
       flex: 1;
       display: flex;
       justify-content: center;
       align-items: stretch;
       min-height: 100vh;
+      position: relative;
+      z-index: 1;
     }
     .container {
       width: 100%;
@@ -59,6 +76,12 @@
       border: 1px solid rgba(255,255,255,0.03);
       backdrop-filter: blur(12px);
     }
+    body.day-mode .card {
+      background: rgba(255,255,255,0.92);
+      color: #111827;
+      border-color: rgba(15,23,42,0.08);
+    }
+
     button {
       background: var(--accent);
       color: #2a1800;
@@ -89,6 +112,12 @@
       color: var(--text-main);
       outline: none;
     }
+    body.day-mode input,
+    body.day-mode select {
+      background: #f9fafb;
+      color: #111827;
+      border-color: rgba(148,163,184,0.7);
+    }
     .players-list {
       text-align: right;
       max-height: 210px;
@@ -108,6 +137,11 @@
       color: #e5e9ff;
       border: 1px solid rgba(255,255,255,0.05);
     }
+    body.day-mode .pill {
+      background: #e5f3ff;
+      color: #0f172a;
+      border-color: rgba(148,163,184,0.6);
+    }
     .dead { text-decoration: line-through; opacity: 0.45; }
     .hidden { display: none !important; }
     .btn-small { font-size: 0.82rem; padding: 0.45rem 0.9rem; }
@@ -118,6 +152,9 @@
       font-size: 0.86rem;
       text-align: right;
     }
+    body.day-mode .section-title {
+      color: #f97316;
+    }
     .role-box {
       font-size: 1.3rem;
       margin: 0.8rem 0 0.6rem;
@@ -126,7 +163,15 @@
       background: radial-gradient(circle at top, rgba(255,176,46,0.16), rgba(9,13,28,0.96));
       border: 1px solid rgba(255,255,255,0.06);
     }
+    body.day-mode .role-box {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+      border-color: rgba(251,191,36,0.9);
+      color: #92400e;
+    }
     .status-line { font-size: 0.9rem; margin-top: 0.3rem; color: #b9c2ff; }
+    body.day-mode .status-line {
+      color: #4b5563;
+    }
     .chip {
       display: inline-block;
       padding: 0.17rem 0.55rem;
@@ -136,7 +181,14 @@
       color: #dde2ff;
       margin: 0.12rem 0.15rem;
     }
+    body.day-mode .chip {
+      background: rgba(37,99,235,0.08);
+      color: #1d4ed8;
+    }
     hr { border: none; border-top: 1px solid rgba(43,56,92,0.85); margin: 0.8rem 0 0.7rem; }
+    body.day-mode hr {
+      border-top-color: rgba(148,163,184,0.8);
+    }
     label.choice-label {
       display: flex;
       align-items: center;
@@ -167,6 +219,10 @@
       margin-bottom: 0.3rem;
     }
     .badge-phase span.dot { width: 7px; height: 7px; border-radius: 50%; background: #ffb02e; }
+    body.day-mode .badge-phase {
+      background: rgba(251,146,60,0.18);
+      color: #9a3412;
+    }
     .log-text {
       font-size: 0.86rem;
       color: #dde2ff;
@@ -174,6 +230,9 @@
       min-height: 2rem;
       line-height: 1.45;
       white-space: pre-wrap;
+    }
+    body.day-mode .log-text {
+      color: #111827;
     }
     .night-result-overlay {
       margin-top: 0.8rem;
@@ -183,6 +242,11 @@
       border: 1px solid rgba(255,255,255,0.15);
       font-size: 1rem;
       text-align: center;
+      color: #f9fafb;
+    }
+    body.day-mode .night-result-overlay {
+      background: rgba(15,23,42,0.8);
+      border-color: rgba(30,64,175,0.9);
     }
     .big-alert {
       margin-top: 0.6rem;
@@ -234,9 +298,90 @@
     }
 
     @media (min-width: 520px) { .card { padding: 1.2rem 1.4rem 1.3rem; } }
+
+    /* عناصر الديكور: شمس/أشجار/قمر/نجوم */
+    .day-sun {
+      position: fixed;
+      top: 8px;
+      left: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #fff8c4 0, #ffd54f 40%, #f9a825 70%);
+      box-shadow: 0 0 20px rgba(255,223,88,0.9);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .day-tree {
+      position: fixed;
+      bottom: 0;
+      width: 40px;
+      height: 70px;
+      background: #2e7d32;
+      border-radius: 40px 40px 0 0;
+      z-index: 0;
+    }
+    .day-tree::after {
+      content: "";
+      position: absolute;
+      bottom: -18px;
+      left: 8px;
+      width: 24px;
+      height: 18px;
+      background: #4e342e;
+      border-radius: 4px;
+    }
+
+    .night-moon {
+      position: fixed;
+      top: 10px;
+      right: 14px;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #fef3c7;
+      box-shadow: 0 0 15px rgba(254,243,199,0.8);
+      overflow: hidden;
+      z-index: 0;
+    }
+    .night-moon::after {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #020617;
+    }
+
+    .night-star {
+      position: fixed;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      opacity: 0.9;
+      z-index: 0;
+    }
+    .night-star.s1 { top: 20px; left: 22%; }
+    .night-star.s2 { top: 60px; left: 60%; }
+    .night-star.s3 { top: 110px; left: 38%; }
+    .night-star.s4 { top: 40px; left: 80%; }
   </style>
 </head>
-<body>
+<body class="night-mode">
+  <!-- ديكور الليل والنهار -->
+  <div class="night-moon"></div>
+  <div class="night-star s1"></div>
+  <div class="night-star s2"></div>
+  <div class="night-star s3"></div>
+  <div class="night-star s4"></div>
+
+  <div class="day-sun hidden"></div>
+  <div class="day-tree hidden" style="left:18px;"></div>
+  <div class="day-tree hidden" style="right:18px;"></div>
+
   <div class="root">
     <div class="container">
 
@@ -438,6 +583,26 @@
     let currentNightVoterName = null;
     let currentDayVoterName = null;
 
+    function setNightTheme() {
+      document.body.classList.add('night-mode');
+      document.body.classList.remove('day-mode');
+
+      document.querySelector('.night-moon').classList.remove('hidden');
+      document.querySelectorAll('.night-star').forEach(el => el.classList.remove('hidden'));
+      document.querySelector('.day-sun').classList.add('hidden');
+      document.querySelectorAll('.day-tree').forEach(el => el.classList.add('hidden'));
+    }
+
+    function setDayTheme() {
+      document.body.classList.remove('night-mode');
+      document.body.classList.add('day-mode');
+
+      document.querySelector('.night-moon').classList.add('hidden');
+      document.querySelectorAll('.night-star').forEach(el => el.classList.add('hidden'));
+      document.querySelector('.day-sun').classList.remove('hidden');
+      document.querySelectorAll('.day-tree').forEach(el => el.classList.remove('hidden'));
+    }
+
     function saveGameState() {
       const currentScreen =
         !screenSetup.classList.contains('hidden') ? 'setup' :
@@ -477,11 +642,13 @@
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) {
           updateMafiaCountOptions();
+          setNightTheme();
           return;
         }
         const state = JSON.parse(raw);
         if (!state || !Array.isArray(state.players)) {
           updateMafiaCountOptions();
+          setNightTheme();
           return;
         }
 
@@ -501,8 +668,10 @@
           renderPlayersList();
           updateMafiaCountOptions();
           updateRolesSummaryPreview();
+          setNightTheme();
         } else if (state.currentScreen === 'roles') {
           renderRolesScreen();
+          setNightTheme();
         } else if (state.currentScreen === 'main') {
           renderMainScreen();
           nightResultDiv.textContent = state.nightResultText || '';
@@ -512,14 +681,14 @@
 
           if (state.phaseKillVisible) {
             document.getElementById('phase-kill').classList.remove('hidden');
-          } else {
-            document.getElementById('phase-kill').classList.add('hidden');
-          }
-          if (state.phaseVoteVisible) {
-            document.getElementById('phase-vote').classList.remove('hidden');
-          } else {
             document.getElementById('phase-vote').classList.add('hidden');
+            setNightTheme();
+          } else if (state.phaseVoteVisible) {
+            document.getElementById('phase-kill').classList.add('hidden');
+            document.getElementById('phase-vote').classList.remove('hidden');
+            setDayTheme();
           }
+
           btnFinishNight.style.display = state.finishNightVisible ? 'block' : 'none';
 
           buildNightVoterList();
@@ -528,6 +697,7 @@
         } else if (state.currentScreen === 'end') {
           endMessage.textContent = state.endMessageText || '';
           renderFinalStatusOnly();
+          setDayTheme();
         }
 
         roundNumberSpan.textContent = roundNumber;
@@ -536,6 +706,7 @@
       } catch (e) {
         console.warn('localStorage load error', e);
         updateMafiaCountOptions();
+        setNightTheme();
       }
     }
 
@@ -594,6 +765,7 @@
       updateMafiaCountOptions();
       showScreen('setup');
       clearGameState();
+      setNightTheme();
     }
 
     function newGameSameNames() {
@@ -621,7 +793,7 @@
     }
 
     function newGameToSetup() {
-      if (!players.length) { showScreen('setup'); return; }
+      if (!players.length) { showScreen('setup'); setNightTheme(); return; }
       if (!confirm('العودة إلى شاشة إضافة الأسماء مع الاحتفاظ بالأسماء فقط.\nسيتم إنهاء اللعبة الحالية.\nهل أنت متأكد؟')) return;
       players = players.map(p => ({
         name: p.name,
@@ -642,6 +814,7 @@
       updateMafiaCountOptions();
       updateRolesSummaryPreview();
       showScreen('setup');
+      setNightTheme();
       saveGameState();
     }
 
@@ -666,6 +839,7 @@
       showScreen('setup');
       updateMafiaCountOptions();
       updateRolesSummaryPreview();
+      setNightTheme();
       saveGameState();
     }
 
@@ -745,6 +919,7 @@
       nightResultDiv.textContent = '';
       showScreen('roles');
       renderRolesScreen();
+      setNightTheme();
       saveGameState();
     }
 
@@ -840,6 +1015,7 @@
     function goToMainScreen() {
       showScreen('main');
       prepareNewRound();
+      setNightTheme();
       saveGameState();
     }
 
@@ -866,6 +1042,7 @@
       mafiaHelpBox.classList.add('hidden');
       mafiaVotesViewDiv.textContent = 'لا توجد اقتراحات مافيا بعد.';
       btnFinishNight.style.display = 'none';
+      setNightTheme();
     }
 
     function buildStatusText() {
@@ -1121,6 +1298,7 @@
       document.getElementById('phase-kill').classList.add('hidden');
       document.getElementById('phase-vote').classList.remove('hidden');
       buildDayVoterList();
+      setDayTheme();
       saveGameState();
     }
 
@@ -1197,12 +1375,10 @@
 
     // تصويت نهاري: طرد صاحب أعلى الأصوات بين الأحياء، تخطي عند تعادل الأعلى + إظهار عدد الأصوات
     function finishDayVoting() {
-      // نحصر الأصوات على اللاعبين الأحياء فقط
       const aliveNames = players.filter(p => p.alive).map(p => p.name);
       const entries = Object.entries(dayVotes)
         .filter(([name, count]) => aliveNames.includes(name));
 
-      // عرض عدد الأصوات لكل لاعب قبل الحسم
       if (entries.length) {
         let votesLog = 'أصوات النهار:\n';
         entries.forEach(([name, count]) => {
@@ -1254,6 +1430,7 @@
       document.getElementById('phase-kill').classList.remove('hidden');
       document.getElementById('phase-vote').classList.add('hidden');
       prepareNewRound();
+      setNightTheme();
       saveGameState();
     }
 
@@ -1283,6 +1460,7 @@
         div.textContent = p.name + ' – ' + p.role + (p.alive ? ' (حي)' : ' (مستبعد)');
         finalStatusDiv.appendChild(div);
       });
+      setDayTheme();
       saveGameState();
     }
 
@@ -1328,6 +1506,7 @@
       updateMafiaCountOptions();
       updateRolesSummaryPreview();
       clearGameState();
+      setNightTheme();
       saveGameState();
     }
 
