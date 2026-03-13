@@ -205,7 +205,6 @@
       border-color: rgba(70,190,120,0.8);
     }
 
-    /* ألوان الدور في شاشة إظهار الدور */
     .role-box.mafia {
       background: radial-gradient(circle at top, rgba(220,53,69,0.25), rgba(9,13,28,0.96));
       border-color: rgba(220,53,69,0.8);
@@ -223,7 +222,6 @@
       border-color: rgba(255,255,255,0.06);
     }
 
-    /* أسماء شركاء المافيا أوضح */
     #mafia-friends-role {
       font-size: 1rem;
       font-weight: 700;
@@ -1271,10 +1269,15 @@
     }
 
     function resetGame() {
+      if (!confirm('ستعود إلى الإعدادات الرئيسية وسيتم إلغاء اللعبة الحالية.\nلن تُحذف الأسماء، لكن سيتم تصفير الجولات والتصويت.\nهل أنت متأكد؟')) {
+        return;
+      }
+
       screenMain.classList.add('hidden');
       screenEnd.classList.add('hidden');
       screenRoles.classList.add('hidden');
       screenSetup.classList.remove('hidden');
+
       roundNumber = 1;
       mafiaVotes = {};
       doctorTarget = null;
@@ -1284,9 +1287,20 @@
       rolesSummary.textContent = '';
       nightResultDiv.classList.add('hidden');
       nightResultDiv.textContent = '';
+
+      players = players.map(p => ({
+        name: p.name,
+        role: null,
+        alive: true,
+        roleRevealed: false,
+        nightVoted: false,
+        dayVoted: false
+      }));
+
       updateMafiaCountOptions();
       updateRolesSummaryPreview();
       clearGameState();
+      saveGameState();
     }
 
     window.addEventListener('load', loadGameState);
