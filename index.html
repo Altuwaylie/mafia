@@ -1195,12 +1195,21 @@
       saveGameState();
     }
 
-    // تصويت نهاري: طرد صاحب أعلى الأصوات بين الأحياء، تخطي عند تعادل الأعلى
+    // تصويت نهاري: طرد صاحب أعلى الأصوات بين الأحياء، تخطي عند تعادل الأعلى + إظهار عدد الأصوات
     function finishDayVoting() {
       // نحصر الأصوات على اللاعبين الأحياء فقط
       const aliveNames = players.filter(p => p.alive).map(p => p.name);
       const entries = Object.entries(dayVotes)
         .filter(([name, count]) => aliveNames.includes(name));
+
+      // عرض عدد الأصوات لكل لاعب قبل الحسم
+      if (entries.length) {
+        let votesLog = 'أصوات النهار:\n';
+        entries.forEach(([name, count]) => {
+          votesLog += '- ' + name + ': ' + count + ' صوت\n';
+        });
+        logDiv.textContent += (logDiv.textContent ? '\n' : '') + votesLog.trim();
+      }
 
       if (!entries.length) {
         logDiv.textContent += (logDiv.textContent ? '\n' : '') +
