@@ -1195,9 +1195,12 @@
       saveGameState();
     }
 
-    // تصويت نهاري: طرد صاحب أعلى الأصوات، تخطي عند التعادل، مع ذكر الاسم
+    // تصويت نهاري: طرد صاحب أعلى الأصوات بين الأحياء، تخطي عند تعادل الأعلى
     function finishDayVoting() {
-      const entries = Object.entries(dayVotes);
+      // نحصر الأصوات على اللاعبين الأحياء فقط
+      const aliveNames = players.filter(p => p.alive).map(p => p.name);
+      const entries = Object.entries(dayVotes)
+        .filter(([name, count]) => aliveNames.includes(name));
 
       if (!entries.length) {
         logDiv.textContent += (logDiv.textContent ? '\n' : '') +
@@ -1214,7 +1217,7 @@
 
         if (topTargets.length > 1) {
           logDiv.textContent += (logDiv.textContent ? '\n' : '') +
-            'تعادل في التصويت النهاري، لم يُطرد أحد.';
+            'تم التخطي بسبب تعادل الأصوات في التصويت النهاري، لم يُطرد أحد.';
         } else {
           const targetName = topTargets[0];
           const target = players.find(p => p.name === targetName && p.alive);
