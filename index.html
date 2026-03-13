@@ -405,7 +405,7 @@
     let currentNightVoterName = null;
     let currentDayVoterName = null;
 
-    // ==== تخزين/استرجاع الحالة عبر localStorage ====[web:108][web:110][web:113]
+    // حفظ الحالة
     function saveGameState() {
       const currentScreen =
         !screenSetup.classList.contains('hidden') ? 'setup' :
@@ -429,7 +429,8 @@
         logText: logDiv.textContent,
         phaseKillVisible: !document.getElementById('phase-kill').classList.contains('hidden'),
         phaseVoteVisible: !document.getElementById('phase-vote').classList.contains('hidden'),
-        finishNightVisible: (btnFinishNight.style.display !== 'none')
+        finishNightVisible: (btnFinishNight.style.display !== 'none'),
+        endMessageText: endMessage.textContent || ''
       };
 
       try {
@@ -462,10 +463,8 @@
         currentNightVoterName = state.currentNightVoterName || null;
         currentDayVoterName = state.currentDayVoterName || null;
 
-        // استرجاع الشاشة الحالية
         showScreen(state.currentScreen || 'setup');
 
-        // إعادة رسم حسب الشاشة
         if (state.currentScreen === 'setup') {
           renderPlayersList();
           updateMafiaCountOptions();
@@ -474,7 +473,6 @@
           renderRolesScreen();
         } else if (state.currentScreen === 'main') {
           renderMainScreen();
-          // تطبيق تفاصيل إضافية
           nightResultDiv.textContent = state.nightResultText || '';
           if (state.nightResultVisible) nightResultDiv.classList.remove('hidden');
           else nightResultDiv.classList.add('hidden');
@@ -492,13 +490,11 @@
           }
           btnFinishNight.style.display = state.finishNightVisible ? 'block' : 'none';
 
-          // إعادة بناء قوائم المصوتين
           buildNightVoterList();
           buildDayVoterList();
-          // تحديث قائمة اقتراحات المافيا
           updateMafiaVotesView();
         } else if (state.currentScreen === 'end') {
-          endMessage.textContent = state.endMessage || '';
+          endMessage.textContent = state.endMessageText || '';
           renderFinalStatusOnly();
         }
 
@@ -519,7 +515,7 @@
       }
     }
 
-    // ==== منطق اللعبة ====
+    // منطق اللعبة
     function addPlayer() {
       const name = playerNameInput.value.trim();
       if (!name) return;
@@ -552,7 +548,7 @@
     }
 
     function clearAllPlayers() {
-      if (!confirm('حذف جميع الأسماء وإعادة ضبط اللعبة؟')) return;
+      if (!confirm('سيتم حذف جميع الأسماء وكل تقدم اللعبة.\nهل أنت متأكد؟')) return;
       players = [];
       mafiaCount = 1;
       roundNumber = 1;
@@ -571,7 +567,7 @@
 
     function newGameSameNames() {
       if (!players.length) { alert('لا يوجد أسماء.'); return; }
-      if (!confirm('بداية جديدة بنفس الأسماء؟')) return;
+      if (!confirm('بداية جديدة بالجولة والأدوار مع الاحتفاظ بكل الأسماء.\nهل أنت متأكد؟')) return;
       players = players.map(p => ({
         name: p.name,
         role: null,
@@ -769,11 +765,10 @@
       roundNumberSpan.textContent = roundNumber;
       renderAliveList();
       statusLineDiv.textContent = buildStatusText();
-      logDiv.textContent = logDiv.textContent || '';
-      nightResultDiv.classList.add('hidden');
-      nightResultDiv.textContent = nightResultDiv.textContent || '';
       buildNightVoterList();
       buildDayVoterList();
+      nightResultDiv.classList.add('hidden');
+      nightResultDiv.textContent = '';
       nightTargetArea.classList.add('hidden');
       dayTargetArea.classList.add('hidden');
       document.getElementById('phase-kill').classList.remove('hidden');
@@ -827,7 +822,8 @@
       if (!voter || !voter.alive || voter.nightVoted) return;
       currentNightVoterName = name;
 
-      const alive = players.filter(p => p.alive && p.name !== name);
+      // الآن: كل الأحياء أهداف، بما فيهم نفسه
+      const alive = players.filter(p => p.alive);
       nightTargetSelectDiv.innerHTML = '';
 
       if (voter.role === 'مافيا') {
@@ -867,22 +863,23 @@
       if (voter.role === 'مافيا') {
         nightRoleInstruction.className = 'big-alert red';
         nightRoleInstruction.textContent =
-          'أنت مافيا: يمكنك اختيار أكثر من هدف. سيتم عرض اقتراحات المافيا لبقية المافيا للتنسيق.';
+          'أنت مافيا: يمكنك اختيار أكثر من هدف (حتى نفسك). سيتم عرض اقتراحات المافيا لبقية المافيا للتنسيق.';
         mafiaHelpBox.classList.remove('hidden');
         updateMafiaVotesView();
       } else if (voter.role === 'دكتور') {
         nightRoleInstruction.className = 'big-alert blue';
         nightRoleInstruction.textContent =
-          'أنت دكتور: اختر شخصًا واحدًا لحمايته. لا تحمي نفس الشخص ليلتين متتاليتين.';
+          'أنت دكتور: اختر شخصًا واحدًا لحمايته (يمكنك اختيار نفسك) ولا تحمي نفس الشخص ليلتين متتاليتين.';
         mafiaHelpBox.classList.add('hidden');
       } else if (voter.role === 'شايب') {
         nightRoleInstruction.className = 'big-alert green';
         nightRoleInstruction.textContent =
-          'أنت شايب: اختر شخصًا واحدًا للتعرّف على هويته.';
+          'أنت شايب: اختر شخصًا واحدًا للتعرّف على هويته (يمكنك اختيار نفسك).';
         mafiaHelpBox.classList.add('hidden');
       } else {
         nightRoleInstruction.className = 'big-alert';
-        nightRoleInstruction.textContent = 'اختر شخصًا (تصويت عادي لا يؤثر في القتل).';
+        nightRoleInstruction.textContent =
+          'اختر شخصًا (تصويت عادي لا يؤثر في القتل، ويمكنك اختيار نفسك).';
         mafiaHelpBox.classList.add('hidden');
       }
 
@@ -1203,7 +1200,6 @@
       clearGameState();
     }
 
-    // تحميل الحالة عند فتح الصفحة
     window.addEventListener('load', loadGameState);
   </script>
 </body>
