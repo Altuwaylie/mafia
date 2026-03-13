@@ -1195,25 +1195,41 @@
       saveGameState();
     }
 
+    // تصويت نهاري: طرد صاحب أعلى الأصوات، تخطي عند التعادل، مع ذكر الاسم
     function finishDayVoting() {
       const entries = Object.entries(dayVotes);
+
       if (!entries.length) {
         logDiv.textContent += (logDiv.textContent ? '\n' : '') +
           'تم تخطي التصويت النهاري، لم يُطرد أحد.';
       } else {
-        let targetName = null;
         let maxVotes = -1;
         entries.forEach(([name, count]) => {
-          if (count > maxVotes) { maxVotes = count; targetName = name; }
+          if (count > maxVotes) maxVotes = count;
         });
-        const target = players.find(p => p.name === targetName && p.alive);
-        if (target) {
-          target.alive = false;
+
+        const topTargets = entries
+          .filter(([name, count]) => count === maxVotes)
+          .map(([name]) => name);
+
+        if (topTargets.length > 1) {
           logDiv.textContent += (logDiv.textContent ? '\n' : '') +
-            'تم طرد لاعب بالتصويت النهاري.';
+            'تعادل في التصويت النهاري، لم يُطرد أحد.';
+        } else {
+          const targetName = topTargets[0];
+          const target = players.find(p => p.name === targetName && p.alive);
+          if (target) {
+            target.alive = false;
+            logDiv.textContent += (logDiv.textContent ? '\n' : '') +
+              'تم طرد اللاعب ' + target.name + ' بالتصويت النهاري.';
+          } else {
+            logDiv.textContent += (logDiv.textContent ? '\n' : '') +
+              'لم يُطرد أحد بسبب خطأ في البيانات.';
+          }
         }
       }
 
+      dayVotes = {};
       renderAliveList();
 
       if (checkEndGame()) {
