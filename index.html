@@ -204,6 +204,37 @@
       background: rgba(50,160,90,0.15);
       border-color: rgba(70,190,120,0.8);
     }
+
+    /* ألوان الدور في شاشة إظهار الدور */
+    .role-box.mafia {
+      background: radial-gradient(circle at top, rgba(220,53,69,0.25), rgba(9,13,28,0.96));
+      border-color: rgba(220,53,69,0.8);
+    }
+    .role-box.doctor {
+      background: radial-gradient(circle at top, rgba(0,123,255,0.25), rgba(9,13,28,0.96));
+      border-color: rgba(0,123,255,0.8);
+    }
+    .role-box.elder {
+      background: radial-gradient(circle at top, rgba(40,167,69,0.25), rgba(9,13,28,0.96));
+      border-color: rgba(40,167,69,0.8);
+    }
+    .role-box.citizen {
+      background: radial-gradient(circle at top, rgba(255,176,46,0.16), rgba(9,13,28,0.96));
+      border-color: rgba(255,255,255,0.06);
+    }
+
+    /* أسماء شركاء المافيا أوضح */
+    #mafia-friends-role {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #ffb3c0;
+    }
+    #mafia-friends-role .mafia-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #ffe5ea;
+    }
+
     @media (min-width: 520px) { .card { padding: 1.2rem 1.4rem 1.3rem; } }
   </style>
 </head>
@@ -258,7 +289,6 @@
         <div style="margin-top:0.7rem; display:flex; gap:0.4rem;">
           <button id="btn-start-rounds" style="flex:1;" class="hidden"
                   onclick="goToMainScreen()">بدء الجولات</button>
-          <!-- زر العودة للرئيسية -->
           <button style="flex:1; background:#38405f; color:#e5e9ff;"
                   onclick="backToSetupFromRoles()">عودة للرئيسية</button>
         </div>
@@ -335,7 +365,6 @@
         <div id="log" class="log-text"></div>
 
         <div style="margin-top:0.8rem; display:flex; gap:0.4rem;">
-          <!-- بداية جديدة ترجع إلى شاشة الأسماء -->
           <button class="btn-small" style="flex:1;" onclick="newGameToSetup()">بداية جديدة</button>
           <button class="btn-small" style="flex:1;" onclick="resetGame()">عودة للإعدادات</button>
         </div>
@@ -350,7 +379,6 @@
         <div id="final-status" class="players-list"></div>
 
         <div style="margin-top:0.7rem; display:flex; gap:0.4rem;">
-          <!-- هنا أيضًا بداية جديدة ترجع لقائمة الأسماء -->
           <button style="flex:1;" onclick="newGameToSetup()">بداية جديدة</button>
           <button style="flex:1; background:#742a2a; color:#ffe5e5;" onclick="resetGame()">عودة للإعدادات</button>
         </div>
@@ -594,7 +622,6 @@
       saveGameState();
     }
 
-    // بداية جديدة ترجع لقائمة الأسماء مع الاحتفاظ بالأسماء فقط
     function newGameToSetup() {
       if (!players.length) { showScreen('setup'); return; }
       if (!confirm('العودة إلى شاشة إضافة الأسماء مع الاحتفاظ بالأسماء فقط.\nسيتم إنهاء اللعبة الحالية.\nهل أنت متأكد؟')) return;
@@ -620,10 +647,8 @@
       saveGameState();
     }
 
-    // عودة من توزيع الأدوار للرئيسية
     function backToSetupFromRoles() {
       if (!confirm('ستعود إلى شاشة إضافة الأسماء.\nلن تُكمِل هذه الجولة.\nهل أنت متأكد؟')) return;
-      // لا نحذف الأسماء، فقط نرجع لشاشة الإعداد
       players = players.map(p => ({
         name: p.name,
         role: null,
@@ -774,14 +799,24 @@
       else if (p.role === 'دكتور') text = 'أنت دكتور (مسالم)';
       else if (p.role === 'شايب') text = 'أنت شايب (مسالم)';
       else text = 'أنت مسالم';
-
       rolePlayerRole.textContent = text;
+
+      rolePlayerRole.className = 'role-box';
+      if (p.role === 'مافيا') {
+        rolePlayerRole.classList.add('mafia');
+      } else if (p.role === 'دكتور') {
+        rolePlayerRole.classList.add('doctor');
+      } else if (p.role === 'شايب') {
+        rolePlayerRole.classList.add('elder');
+      } else {
+        rolePlayerRole.classList.add('citizen');
+      }
 
       if (p.role === 'مافيا') {
         const mafiaNames = players
           .filter(pl => pl.role === 'مافيا' && pl.name !== p.name)
-          .map(pl => pl.name);
-        mafiaFriendsRoleDiv.textContent = mafiaNames.length
+          .map(pl => '<span class="mafia-name">' + pl.name + '</span>');
+        mafiaFriendsRoleDiv.innerHTML = mafiaNames.length
           ? 'أصدقاؤك المافيا: ' + mafiaNames.join('، ')
           : 'أنت المافيا الوحيد.';
       } else {
@@ -860,7 +895,6 @@
       });
     }
 
-    // NIGHT
     function buildNightVoterList() {
       nightVoterListDiv.innerHTML = '';
       const alive = players.filter(p => p.alive);
@@ -1092,7 +1126,6 @@
       saveGameState();
     }
 
-    // DAY
     function buildDayVoterList() {
       dayVoterListDiv.innerHTML = '';
       const alive = players.filter(p => p.alive);
