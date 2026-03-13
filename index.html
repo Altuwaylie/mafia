@@ -255,8 +255,13 @@
           <button onclick="hideCurrentRole()">إخفاء الدور</button>
         </div>
 
-        <button id="btn-start-rounds" style="margin-top:0.7rem; width:100%;"
-                class="hidden" onclick="goToMainScreen()">بدء الجولات</button>
+        <div style="margin-top:0.7rem; display:flex; gap:0.4rem;">
+          <button id="btn-start-rounds" style="flex:1;" class="hidden"
+                  onclick="goToMainScreen()">بدء الجولات</button>
+          <!-- زر العودة للرئيسية -->
+          <button style="flex:1; background:#38405f; color:#e5e9ff;"
+                  onclick="backToSetupFromRoles()">عودة للرئيسية</button>
+        </div>
       </div>
 
       <!-- اللعب -->
@@ -330,7 +335,8 @@
         <div id="log" class="log-text"></div>
 
         <div style="margin-top:0.8rem; display:flex; gap:0.4rem;">
-          <button class="btn-small" style="flex:1;" onclick="newGameSameNames()">بداية جديدة</button>
+          <!-- بداية جديدة ترجع إلى شاشة الأسماء -->
+          <button class="btn-small" style="flex:1;" onclick="newGameToSetup()">بداية جديدة</button>
           <button class="btn-small" style="flex:1;" onclick="resetGame()">عودة للإعدادات</button>
         </div>
       </div>
@@ -344,7 +350,8 @@
         <div id="final-status" class="players-list"></div>
 
         <div style="margin-top:0.7rem; display:flex; gap:0.4rem;">
-          <button style="flex:1;" onclick="newGameSameNames()">بداية جديدة</button>
+          <!-- هنا أيضًا بداية جديدة ترجع لقائمة الأسماء -->
+          <button style="flex:1;" onclick="newGameToSetup()">بداية جديدة</button>
           <button style="flex:1; background:#742a2a; color:#ffe5e5;" onclick="resetGame()">عودة للإعدادات</button>
         </div>
       </div>
@@ -405,7 +412,6 @@
     let currentNightVoterName = null;
     let currentDayVoterName = null;
 
-    // حفظ الحالة
     function saveGameState() {
       const currentScreen =
         !screenSetup.classList.contains('hidden') ? 'setup' :
@@ -515,7 +521,6 @@
       }
     }
 
-    // منطق اللعبة
     function addPlayer() {
       const name = playerNameInput.value.trim();
       if (!name) return;
@@ -586,6 +591,58 @@
       updateMafiaCountOptions();
       updateRolesSummaryPreview();
       startGame();
+      saveGameState();
+    }
+
+    // بداية جديدة ترجع لقائمة الأسماء مع الاحتفاظ بالأسماء فقط
+    function newGameToSetup() {
+      if (!players.length) { showScreen('setup'); return; }
+      if (!confirm('العودة إلى شاشة إضافة الأسماء مع الاحتفاظ بالأسماء فقط.\nسيتم إنهاء اللعبة الحالية.\nهل أنت متأكد؟')) return;
+      players = players.map(p => ({
+        name: p.name,
+        role: null,
+        alive: true,
+        roleRevealed: false,
+        nightVoted: false,
+        dayVoted: false
+      }));
+      mafiaVotes = {};
+      doctorTarget = null;
+      lastDoctorTarget = null;
+      dayVotes = {};
+      roundNumber = 1;
+      logDiv.textContent = '';
+      nightResultDiv.classList.add('hidden');
+      nightResultDiv.textContent = '';
+      updateMafiaCountOptions();
+      updateRolesSummaryPreview();
+      showScreen('setup');
+      saveGameState();
+    }
+
+    // عودة من توزيع الأدوار للرئيسية
+    function backToSetupFromRoles() {
+      if (!confirm('ستعود إلى شاشة إضافة الأسماء.\nلن تُكمِل هذه الجولة.\nهل أنت متأكد؟')) return;
+      // لا نحذف الأسماء، فقط نرجع لشاشة الإعداد
+      players = players.map(p => ({
+        name: p.name,
+        role: null,
+        alive: true,
+        roleRevealed: false,
+        nightVoted: false,
+        dayVoted: false
+      }));
+      mafiaVotes = {};
+      doctorTarget = null;
+      lastDoctorTarget = null;
+      dayVotes = {};
+      roundNumber = 1;
+      logDiv.textContent = '';
+      nightResultDiv.classList.add('hidden');
+      nightResultDiv.textContent = '';
+      showScreen('setup');
+      updateMafiaCountOptions();
+      updateRolesSummaryPreview();
       saveGameState();
     }
 
@@ -822,7 +879,6 @@
       if (!voter || !voter.alive || voter.nightVoted) return;
       currentNightVoterName = name;
 
-      // الآن: كل الأحياء أهداف، بما فيهم نفسه
       const alive = players.filter(p => p.alive);
       nightTargetSelectDiv.innerHTML = '';
 
